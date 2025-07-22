@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
+import { CharacterListComponent } from './components/character-list/character-list';
 
 // GUÍA PARA EL ESTUDIANTE:
 // 1. Importa tu `CharacterListComponent`.
@@ -9,7 +10,7 @@ import { RouterOutlet } from '@angular/router';
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, RouterOutlet],
+  imports: [CommonModule, RouterOutlet, CharacterListComponent],
   templateUrl: './app.html',
   styleUrls: ['./app.scss']
 })

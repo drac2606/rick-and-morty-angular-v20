@@ -3,34 +3,48 @@
   <div class="search-container">
     <input 
       placeholder="Buscar personajes..."
-      /> <!-- Enlazar a searchTerm con [(ngModel)] y llamar a onSearchKeyup($event) en (keyup) -->
-    
-    <button>Buscar</button> <!-- Enlazar (click) a onSearch() -->
+      [(ngModel)]="searchTerm"
+      (keyup)="onSearchKeyup($event)"
+    />
+    <button (click)="onSearch()">Buscar</button>
   </div>
 
-  <!--loading es verdadero  -->
-  @if (true) {
+  @if (loading) {
     <div class="loading-state">
       <p>Cargando personajes...</p>
     </div>
   }
   
-  <!-- errorMessage tiene contenido  -->
-  @if (true) {
+  @if (errorMessage) {
     <div class="error-state">
-      <p><!-- Mostrar errorMessage aquí --></p>
+      <p>{{ errorMessage }}</p>
     </div>
   }
 
-  <!-- no cargando Y hay personajes  -->
-  @if (true) {
+  @if (!loading && hasCharacters()) {
     <div class="character-grid">
-      <!-- loop for con señal de personajes  -->
+      @for (character of characters(); track character.id) {
+        <div class="character-card">
+          <img [src]="character.image" [alt]="character.name" class="character-image" />
+          <div class="character-info">
+            <h3>{{ character.name }}</h3>
+            <p [ngClass]="{
+              'status-alive': character.status === 'Alive',
+              'status-dead': character.status === 'Dead',
+              'status-unknown': character.status !== 'Alive' && character.status !== 'Dead'
+            }">Status: {{ character.status }}</p>
+            <p [ngClass]="{
+              'species-human': character.species === 'Human',
+              'species-alien': character.species === 'Alien',
+              'species-other': character.species !== 'Human' && character.species !== 'Alien'
+            }">Species: {{ character.species }}</p>
+          </div>
+        </div>
+      }
     </div>
   }
 
-    <!-- no cargando Y no hay error Y no hay personajes  -->
-  @if (true) {
+  @if (!loading && !errorMessage && !hasCharacters()) {
     <div class="empty-state">
       <p>No se encontraron personajes con ese término de búsqueda.</p>
     </div>

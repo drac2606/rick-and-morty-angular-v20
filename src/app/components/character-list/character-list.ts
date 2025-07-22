@@ -1,6 +1,7 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { finalize, Subject, debounceTime, distinctUntilChanged, takeUntil, filter, tap } from 'rxjs';
 import { Api } from '../../services/api';
 import { Character } from '../../models/character';
 
@@ -14,25 +15,69 @@ import { Character } from '../../models/character';
   templateUrl: './character-list.html',
   styleUrls: ['./character-list.scss']
 })
-export class CharacterListComponent implements OnInit {
+export class CharacterListComponent implements OnInit, OnDestroy {
+  private api = inject(Api);
+  public characters = this.api.characters;
+
+  public searchTerm: string = '';
+  public loading: boolean = false;
+  public errorMessage: string = '';
+
+  public hasCharacters = computed(() => this.characters().length > 0);
+
+  private searchSubject = new Subject<string>();
+  private destroy$ = new Subject<void>();
 
   ngOnInit(): void {
+    this.loadInitialCharacters();
+    this.searchSubject.pipe(
+      debounceTime(400),
+      distinctUntilChanged(),
+      takeUntil(this.destroy$),
+      tap(() => {
+        this.loading = true;
+        this.errorMessage = '';
+      }),
+      filter(term => term.trim().length > 0 || term === ''),
+    ).subscribe(term => {
+      if (term.trim() === '') {
+        this.loadInitialCharacters();
+      } else {
+        this.api.searchCharacters(term)
+          .pipe(finalize(() => this.loading = false))
+          .subscribe({
+            next: () => {},
+            error: () => {
+              this.errorMessage = 'No se encontraron personajes con ese término de búsqueda.';
+            }
+          });
+      }
+    });
+  }
 
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   loadInitialCharacters(): void {
-    
-    throw new Error('Método no implementado'); 
+    this.loading = true;
+    this.errorMessage = '';
+    this.api.getCharacters()
+      .pipe(finalize(() => this.loading = false))
+      .subscribe({
+        next: () => {},
+        error: () => {
+          this.errorMessage = 'Error al cargar los personajes.';
+        }
+      });
   }
 
   onSearch(): void {
-    
-    throw new Error('Método no implementado'); 
+    this.searchSubject.next(this.searchTerm);
   }
 
   onSearchKeyup(event: KeyboardEvent): void {
-    if (event.key === 'Enter') {
-      this.onSearch();
-    }
+    this.searchSubject.next(this.searchTerm);
   }
 }
